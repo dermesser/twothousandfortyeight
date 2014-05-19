@@ -21,34 +21,30 @@ makeField = matrix sidelength sidelength (const 0)
 
 -- We need foldl and foldr because it's essential in which order the list is traversed
 shiftField :: Direction -> Field -> Field
-shiftField ToUp f = foldl' (flip upshift) f [(r,c) | r <- [2..sidelength], c <- [1..sidelength]]
-shiftField ToDown f = foldl' (flip downshift) f [(r,c) | r <- [1..sidelength-1], c <- [1..sidelength]]
-shiftField ToLeft f = foldl' (flip leftshift) f [(r,c) | r <- [1..sidelength], c <- [2..sidelength]]
-shiftField ToRight f = foldr rightshift f [(r,c) | r <- [1..sidelength], c <- [1..sidelength-1]]
+shiftField ToUp f = absoluteMap $ foldl' (moveTile ToUp) f [(r,c) | r <- [2..sidelength], c <- [1..sidelength]]
+shiftField ToDown f = absoluteMap $ foldr (flip $ moveTile ToDown) f [(r,c) | r <- [1..sidelength-1], c <- [1..sidelength]]
+shiftField ToLeft f = absoluteMap $ foldl' (moveTile ToLeft) f [(r,c) | r <- [1..sidelength], c <- [2..sidelength]]
+shiftField ToRight f = absoluteMap $ foldr (flip $ moveTile ToRight) f [(r,c) | r <- [1..sidelength], c <- [1..sidelength-1]]
 
-upshift :: (Int,Int) -> Field -> Field
-upshift p@(r,c) f | r < 2 || c < 1 = f
-                  | (f ! (r-1,c)) == 0 = upshift (r-1,c) $ multipleSet [((r-1,c),f ! p), (p,0)] f
-                  | (f ! (r-1,c)) == (f ! p) = multipleSet [((r-1,c),2 * (f ! p)), (p,0)] f
-                  | otherwise = f
+moveTile :: Direction -> Field -> (Int,Int) -> Field
+moveTile d f p@(r,c) = case f ! p of
+                            0 -> f
+                            v | not (isVoidAddress nextfield) -> case f ! nextfield of
+                                    0 -> moveTile d (multipleSet [(nextfield,f ! p),(p,0)] f) nextfield
+                                    nextv | nextv == v && not (isVoidAddress nextfield) -> multipleSet [(nextfield,-2 * (f ! p)),(p,0)] f
+                                          | otherwise -> f
+                              | otherwise -> f
+    where nextfield = advanceField d p
 
-downshift :: (Int,Int) -> Field -> Field
-downshift p@(r,c) f | r > 4 || c < 1 = f
-                    | (f ! (r+1,c)) == 0 = downshift (r+1,c) $ multipleSet [((r+1,c),f ! p), (p,0)] f
-                    | (f ! (r+1,c)) == (f ! p) = multipleSet [((r+1,c), 2 * (f ! p)), (p,0)] f
-                    | otherwise = f
+advanceField :: Direction -> (Int,Int) -> (Int,Int)
+advanceField ToUp (r,c) = (r-1,c)
+advanceField ToDown (r,c) = (r+1,c)
+advanceField ToLeft (r,c) = (r,c-1)
+advanceField ToRight (r,c) = (r,c+1)
 
-leftshift :: (Int,Int) -> Field -> Field
-leftshift p@(r,c) f | r < 1 || c < 2 = f
-                    | (f ! (r,c-1)) == 0 = leftshift (r,c-1) $ multipleSet [((r,c-1),f ! p), (p,0)] f
-                    | (f ! (r,c-1)) == (f ! p) = multipleSet [((r,c-1),2 * (f ! p)), (p,0)] f
-                    | otherwise = f
 
-rightshift :: (Int,Int) -> Field -> Field
-rightshift p@(r,c) f | r < 1 || c > 4 = f
-                     | (f ! (r,c+1)) == 0 = rightshift (r,c+1) $ multipleSet [((r,c+1),f ! p), (p,0)] f
-                     | (f ! (r,c+1)) == (f ! p) = multipleSet [((r,c+1),2 * (f ! p)), (p,0)] f
-                     | otherwise = f
+isVoidAddress :: (Int,Int) -> Bool
+isVoidAddress (r,c) = r < 1 || c < 1 || r > sidelength || c > sidelength
 
 -- Random generation of tiles.
 
@@ -85,4 +81,10 @@ multipleSet l f = foldr (\(p,v) oldfield -> setElem v p oldfield) f l
 
 getZeroes :: Field -> [(Int,Int)]
 getZeroes f = foldr (\p c -> if (f ! p) /= 0 then c else p:c) [] [(r,c) | r <- [1..sidelength], c <- [1..sidelength]]
+
+matrixMap :: (a -> a) -> Matrix a -> Matrix a
+matrixMap f m = foldr (\p mat -> setElem (f (mat ! p)) p mat) m [(r,c) | r <- [1..nrows m], c <- [1..ncols m]]
+
+absoluteMap :: Field -> Field
+absoluteMap = matrixMap abs
 
