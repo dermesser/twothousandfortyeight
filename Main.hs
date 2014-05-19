@@ -2,7 +2,7 @@ module Main where
 
 import Data.Maybe (fromMaybe)
 
-import Twothousandfourtyeight
+import Twothousandfortyeight
 import System.Console.ANSI
 
 import System.Exit

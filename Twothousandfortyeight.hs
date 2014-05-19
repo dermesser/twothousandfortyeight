@@ -1,4 +1,4 @@
-module Twothousandfourtyeight where
+module Twothousandfortyeight where
 
 import Data.Matrix
 import Data.List (foldl')
