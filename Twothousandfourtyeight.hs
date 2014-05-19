@@ -59,16 +59,16 @@ getFreePosition f = do
     return (if not $ null freepos
             then freepos !! abs (i `mod` length freepos)
             else (0,0))
-    where freepos = getZeroes f
+    where freepos = getTilesWith 0 f
 
-placeRandomTile :: Field -> IO Field
+placeRandomTile :: Field -> IO (Maybe Field)
 placeRandomTile f = do
     pos <- getFreePosition f
     if pos == (0,0)
-    then return f
+    then return Nothing
     else do
         tile <- getTile
-        return $ setElem tile pos f
+        return . Just $ setElem tile pos f
 
 -- Utils
 
@@ -76,8 +76,8 @@ placeRandomTile f = do
 multipleSet :: [((Int,Int),Tile)] -> Field -> Field
 multipleSet l f = foldr (\(p,v) oldfield -> setElem v p oldfield) f l
 
-getZeroes :: Field -> [(Int,Int)]
-getZeroes f = foldr (\p c -> if (f ! p) /= 0 then c else p:c) [] [(r,c) | r <- [1..sidelength], c <- [1..sidelength]]
+getTilesWith :: Tile -> Field -> [(Int,Int)]
+getTilesWith v f = foldr (\p c -> if (f ! p) /= v then c else p:c) [] [(r,c) | r <- [1..sidelength], c <- [1..sidelength]]
 
 isVoidAddress :: (Int,Int) -> Bool
 isVoidAddress (r,c) = r < 1 || c < 1 || r > sidelength || c > sidelength
