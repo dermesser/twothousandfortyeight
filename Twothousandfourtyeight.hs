@@ -26,12 +26,13 @@ shiftField ToDown f = absoluteMap $ foldr (flip $ moveTile ToDown) f [(r,c) | r 
 shiftField ToLeft f = absoluteMap $ foldl' (moveTile ToLeft) f [(r,c) | r <- [1..sidelength], c <- [2..sidelength]]
 shiftField ToRight f = absoluteMap $ foldr (flip $ moveTile ToRight) f [(r,c) | r <- [1..sidelength], c <- [1..sidelength-1]]
 
+
 moveTile :: Direction -> Field -> (Int,Int) -> Field
 moveTile d f p = case f ! p of
                             0 -> f
                             v | not (isVoidAddress nextfield) -> case f ! nextfield of
                                     0 -> moveTile d (multipleSet [(nextfield,f ! p),(p,0)] f) nextfield
-                                    nextv | nextv == v -> multipleSet [(nextfield,-2 * (f ! p)),(p,0)] f
+                                    nextv | nextv == v -> multipleSet [(nextfield,-2 * (f ! p)),(p,0)] f -- a merged tile is marked by setting the value (*-1) so it won't be automatically merged again
                                           | otherwise -> f
                               | otherwise -> f
     where nextfield = advanceField d p
