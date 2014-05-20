@@ -3,7 +3,6 @@ module Main where
 import Data.Maybe (fromMaybe)
 
 import Twothousandfortyeight
-import System.Console.ANSI
 
 import System.Exit
 
@@ -22,7 +21,6 @@ play oldfld = do
 
 nextAction :: Field -> IO ()
 nextAction fld = do
-            clearScreen
             putStrLn ""
             print fld
             putStrLn ""
@@ -32,13 +30,13 @@ nextAction fld = do
                 'w' -> play (shiftField ToUp fld)
                 's' -> play (shiftField ToDown fld)
                 'd' -> play (shiftField ToRight fld)
+                'h' -> play (shiftField (bestAction fld) fld)
                 'q' -> exitSuccess
                 _ -> play fld
 
 
 gameWon :: IO ()
 gameWon = do
-    clearScreen
     putStrLn ""
     putStrLn "######################"
     putStrLn "-- Congratulations! --"
@@ -47,7 +45,6 @@ gameWon = do
 
 gameOver :: IO ()
 gameOver = do
-    clearScreen
     putStrLn ""
     putStrLn "###############"
     putStrLn "-- GAME OVER --"

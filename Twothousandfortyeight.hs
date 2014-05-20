@@ -1,7 +1,7 @@
 module Twothousandfortyeight where
 
 import Data.Matrix
-import Data.List (foldl')
+import Data.List (foldl',maximumBy)
 
 import System.Random
 
@@ -14,7 +14,7 @@ type Tile = Int
 -- Usually 4x4
 type Field = Matrix Tile
 
-data Direction = ToLeft | ToRight | ToUp | ToDown
+data Direction = ToLeft | ToRight | ToUp | ToDown deriving Show
 
 makeField :: Field
 makeField = matrix sidelength sidelength (const 0)
@@ -46,13 +46,13 @@ advanceField ToRight (r,c) = (r,c+1)
 
 -- Random generation of tiles.
 
-powers :: [Tile]
-powers = [2,2,2,4,4] -- 3:2 is the two to four tiles ration
+droppedTiles :: [Tile]
+droppedTiles = [2,2,2,4,4] -- Which tiles are dropped. Elements are randomly chosen, i.e. the ratio is 3:2 [2]:[4] tiles.
 
 getTile :: IO Tile
 getTile = do
     i <- randomIO
-    return (powers !! abs (i `mod` 5))
+    return (droppedTiles !! abs (i `mod` 5))
 
 getFreePosition :: Field -> IO (Int,Int)
 getFreePosition f = do
@@ -71,20 +71,38 @@ placeRandomTile f = do
         tile <- getTile
         return . Just $ setElem tile pos f
 
--- Utils
+-- Solving algorithm
+
+fieldQuality :: Field -> Int
+fieldQuality f = (1000 * fieldsum) `div` filledtiles
+    where nfields = sidelength * sidelength
+          nzerotiles = length $ getTilesWith 0 f
+          filledtiles = nfields - nzerotiles
+          fieldsum = matrixFold (+) 0 f
+
+bestAction :: Field -> Direction
+bestAction f = fst maxaction
+    where maxaction = maximumBy compfunc scores
+          scores = map (\d -> (d,fieldQuality (shiftField d f))) [ToUp,ToDown,ToRight,ToLeft]
+          compfunc (_,q1) (_,q2) = q1 `compare` q2
+
+-- Utils, either specific or generic for matrices
 
 -- basically a fold using setElem
 multipleSet :: [((Int,Int),Tile)] -> Field -> Field
 multipleSet l f = foldr (\(p,v) oldfield -> setElem v p oldfield) f l
 
 getTilesWith :: Tile -> Field -> [(Int,Int)]
-getTilesWith v f = foldr (\p c -> if (f ! p) /= v then c else p:c) [] [(r,c) | r <- [1..sidelength], c <- [1..sidelength]]
+getTilesWith v f = foldr (\p c -> if (f ! p) /= v then c else p:c) [] [(r,c) | r <- [1..nrows f], c <- [1..ncols f]]
 
 isVoidAddress :: (Int,Int) -> Bool
 isVoidAddress (r,c) = r < 1 || c < 1 || r > sidelength || c > sidelength
 
 matrixMap :: (a -> a) -> Matrix a -> Matrix a
 matrixMap f m = foldr (\p mat -> setElem (f (mat ! p)) p mat) m [(r,c) | r <- [1..nrows m], c <- [1..ncols m]]
+
+matrixFold :: (a -> b -> a) -> a -> Matrix b -> a
+matrixFold f i m = foldl (\acc p -> f acc (m ! p)) i [(r,c) | r <- [1..nrows m], c <- [1..ncols m]]
 
 absoluteMap :: Field -> Field
 absoluteMap = matrixMap abs
