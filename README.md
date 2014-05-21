@@ -15,5 +15,5 @@ tiles). It's not really good.
 
 Twothousandfortyeight recognizes if the user has won or lost a game.
 
-![Screenshot of a lost game in Twothousandfortyeight](http://i.imgur.com/m9FH3wY.png)
+![Screenshot of a lost game in Twothousandfortyeight](http://i.imgur.com/raTxUE5.png)
 
