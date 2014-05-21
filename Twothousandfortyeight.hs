@@ -3,8 +3,6 @@ module Twothousandfortyeight where
 import Data.Matrix
 import Data.List (foldl',maximumBy)
 
-import System.Random
-
 sidelength :: Int
 sidelength = 4
 
@@ -44,33 +42,6 @@ advanceField ToLeft (r,c) = (r,c-1)
 advanceField ToRight (r,c) = (r,c+1)
 
 
--- Random generation of tiles.
-
-droppedTiles :: [Tile]
-droppedTiles = [2,2,2,4,4] -- Which tiles are dropped. Elements are randomly chosen, i.e. the ratio is 3:2 [2]:[4] tiles.
-
-getTile :: IO Tile
-getTile = do
-    i <- randomIO
-    return (droppedTiles !! abs (i `mod` 5))
-
-getFreePosition :: Field -> IO (Int,Int)
-getFreePosition f = do
-    i <- randomIO
-    return (if not $ null freepos
-            then freepos !! abs (i `mod` length freepos)
-            else (0,0))
-    where freepos = getTilesWith 0 f
-
-placeRandomTile :: Field -> IO (Maybe Field)
-placeRandomTile f = do
-    pos <- getFreePosition f
-    if pos == (0,0)
-    then return Nothing
-    else do
-        tile <- getTile
-        return . Just $ setElem tile pos f
-
 -- Solving algorithm
 
 fieldQuality :: Field -> Int
@@ -102,7 +73,7 @@ matrixMap :: (a -> a) -> Matrix a -> Matrix a
 matrixMap f m = foldr (\p mat -> setElem (f (mat ! p)) p mat) m [(r,c) | r <- [1..nrows m], c <- [1..ncols m]]
 
 matrixFold :: (a -> b -> a) -> a -> Matrix b -> a
-matrixFold f i m = foldl (\acc p -> f acc (m ! p)) i [(r,c) | r <- [1..nrows m], c <- [1..ncols m]]
+matrixFold f i m = foldr (\p acc -> f acc (m ! p)) i [(r,c) | r <- [1..nrows m], c <- [1..ncols m]]
 
 absoluteMap :: Field -> Field
 absoluteMap = matrixMap abs

@@ -3,6 +3,7 @@ module Main where
 import Data.Maybe (fromMaybe)
 
 import Twothousandfortyeight
+import IO
 
 import System.Exit
 
@@ -11,7 +12,7 @@ main = do
     play f
 
 play :: Field -> IO ()
-play oldfld = do
+play oldfld =
     case oldfld of
         _fld | gameIsOver oldfld -> gameOver
              | hasWon oldfld -> gameWon
@@ -22,7 +23,7 @@ play oldfld = do
 nextAction :: Field -> IO ()
 nextAction fld = do
             putStrLn ""
-            print fld
+            putStr $ prettyField fld coloredTile
             putStrLn ""
             c <- getChar
             case c of
