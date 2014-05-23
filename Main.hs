@@ -14,17 +14,15 @@ main = do
 play :: Field -> IO ()
 play oldfld =
     case oldfld of
-        _fld | gameIsOver oldfld -> gameOver
-             | hasWon oldfld -> gameWon
+        _fld | gameIsOver oldfld -> printField oldfld >> gameOver
+             | hasWon oldfld -> printField oldfld >> gameWon
              | otherwise -> do
                 newfld <- placeRandomTile oldfld
                 nextAction (fromMaybe oldfld newfld)
 
 nextAction :: Field -> IO ()
 nextAction fld = do
-            putStrLn ""
-            putStr $ prettyField fld coloredTile
-            putStrLn ""
+            printField fld
             c <- getChar
             case c of
                 'a' -> play (shiftField ToLeft fld)
@@ -35,6 +33,8 @@ nextAction fld = do
                 'q' -> exitSuccess
                 _ -> play fld
 
+printField :: Field -> IO ()
+printField fld = putStrLn "" >> putStr (prettyField fld coloredTile) >> putStrLn ""
 
 gameWon :: IO ()
 gameWon = do
